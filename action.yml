@@ -10,9 +10,7 @@ runs:
 inputs:
   token:
     description: |-
-      Depot API token used as registry password. If not provided, the action
-      will attempt to exchange a GitHub Actions OIDC token for a temporary
-      Depot token.
+      Depot API token used as registry password.
     default: ''
     required: false
   image:

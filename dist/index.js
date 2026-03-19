@@ -21298,148 +21298,10 @@ var HttpClient = class {
 };
 var lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => (c[k.toLowerCase()] = obj[k], c), {});
 
-// node_modules/.pnpm/@actions+http-client@4.0.0/node_modules/@actions/http-client/lib/auth.js
-var __awaiter2 = function(thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P ? value : new P(function(resolve2) {
-      resolve2(value);
-    });
-  }
-  return new (P || (P = Promise))(function(resolve2, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function step(result) {
-      result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-var BearerCredentialHandler = class {
-  constructor(token) {
-    this.token = token;
-  }
-  // currently implements pre-authorization
-  // TODO: support preAuth = false where it hooks on 401
-  prepareRequest(options) {
-    if (!options.headers) {
-      throw Error("The request has no headers");
-    }
-    options.headers["Authorization"] = `Bearer ${this.token}`;
-  }
-  // This handler cannot handle 401
-  canHandleAuthentication() {
-    return false;
-  }
-  handleAuthentication() {
-    return __awaiter2(this, void 0, void 0, function* () {
-      throw new Error("not implemented");
-    });
-  }
-};
-
-// node_modules/.pnpm/@actions+core@3.0.0/node_modules/@actions/core/lib/oidc-utils.js
-var __awaiter3 = function(thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P ? value : new P(function(resolve2) {
-      resolve2(value);
-    });
-  }
-  return new (P || (P = Promise))(function(resolve2, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-    function step(result) {
-      result.done ? resolve2(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-var OidcClient = class _OidcClient {
-  static createHttpClient(allowRetry = true, maxRetry = 10) {
-    const requestOptions = {
-      allowRetries: allowRetry,
-      maxRetries: maxRetry
-    };
-    return new HttpClient("actions/oidc-client", [new BearerCredentialHandler(_OidcClient.getRequestToken())], requestOptions);
-  }
-  static getRequestToken() {
-    const token = process.env["ACTIONS_ID_TOKEN_REQUEST_TOKEN"];
-    if (!token) {
-      throw new Error("Unable to get ACTIONS_ID_TOKEN_REQUEST_TOKEN env variable");
-    }
-    return token;
-  }
-  static getIDTokenUrl() {
-    const runtimeUrl = process.env["ACTIONS_ID_TOKEN_REQUEST_URL"];
-    if (!runtimeUrl) {
-      throw new Error("Unable to get ACTIONS_ID_TOKEN_REQUEST_URL env variable");
-    }
-    return runtimeUrl;
-  }
-  static getCall(id_token_url) {
-    return __awaiter3(this, void 0, void 0, function* () {
-      var _a;
-      const httpclient = _OidcClient.createHttpClient();
-      const res = yield httpclient.getJson(id_token_url).catch((error2) => {
-        throw new Error(`Failed to get ID Token. 
- 
-        Error Code : ${error2.statusCode}
- 
-        Error Message: ${error2.message}`);
-      });
-      const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
-      if (!id_token) {
-        throw new Error("Response json body do not have ID Token field");
-      }
-      return id_token;
-    });
-  }
-  static getIDToken(audience) {
-    return __awaiter3(this, void 0, void 0, function* () {
-      try {
-        let id_token_url = _OidcClient.getIDTokenUrl();
-        if (audience) {
-          const encodedAudience = encodeURIComponent(audience);
-          id_token_url = `${id_token_url}&audience=${encodedAudience}`;
-        }
-        debug(`ID token url is ${id_token_url}`);
-        const id_token = yield _OidcClient.getCall(id_token_url);
-        setSecret(id_token);
-        return id_token;
-      } catch (error2) {
-        throw new Error(`Error message: ${error2.message}`);
-      }
-    });
-  }
-};
-
 // node_modules/.pnpm/@actions+core@3.0.0/node_modules/@actions/core/lib/summary.js
 var import_os = require("os");
 var import_fs = require("fs");
-var __awaiter4 = function(thisArg, _arguments, P, generator) {
+var __awaiter2 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -21479,7 +21341,7 @@ var Summary = class {
    * @returns step summary file path
    */
   filePath() {
-    return __awaiter4(this, void 0, void 0, function* () {
+    return __awaiter2(this, void 0, void 0, function* () {
       if (this._filePath) {
         return this._filePath;
       }
@@ -21520,7 +21382,7 @@ var Summary = class {
    * @returns {Promise<Summary>} summary instance
    */
   write(options) {
-    return __awaiter4(this, void 0, void 0, function* () {
+    return __awaiter2(this, void 0, void 0, function* () {
       const overwrite = !!(options === null || options === void 0 ? void 0 : options.overwrite);
       const filePath = yield this.filePath();
       const writeFunc = overwrite ? writeFile : appendFile;
@@ -21534,7 +21396,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   clear() {
-    return __awaiter4(this, void 0, void 0, function* () {
+    return __awaiter2(this, void 0, void 0, function* () {
       return this.emptyBuffer().write({ overwrite: true });
     });
   }
@@ -21736,7 +21598,7 @@ var path2 = __toESM(require("path"), 1);
 // node_modules/.pnpm/@actions+io@3.0.2/node_modules/@actions/io/lib/io-util.js
 var fs = __toESM(require("fs"), 1);
 var path = __toESM(require("path"), 1);
-var __awaiter5 = function(thisArg, _arguments, P, generator) {
+var __awaiter3 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -21766,7 +21628,7 @@ var __awaiter5 = function(thisArg, _arguments, P, generator) {
 var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
 var IS_WINDOWS = process.platform === "win32";
 function readlink(fsPath) {
-  return __awaiter5(this, void 0, void 0, function* () {
+  return __awaiter3(this, void 0, void 0, function* () {
     const result = yield fs.promises.readlink(fsPath);
     if (IS_WINDOWS && !result.endsWith("\\")) {
       return `${result}\\`;
@@ -21776,7 +21638,7 @@ function readlink(fsPath) {
 }
 var READONLY = fs.constants.O_RDONLY;
 function exists(fsPath) {
-  return __awaiter5(this, void 0, void 0, function* () {
+  return __awaiter3(this, void 0, void 0, function* () {
     try {
       yield stat(fsPath);
     } catch (err) {
@@ -21799,7 +21661,7 @@ function isRooted(p) {
   return p.startsWith("/");
 }
 function tryGetExecutablePath(filePath, extensions) {
-  return __awaiter5(this, void 0, void 0, function* () {
+  return __awaiter3(this, void 0, void 0, function* () {
     let stats = void 0;
     try {
       stats = yield stat(filePath);
@@ -21869,7 +21731,7 @@ function isUnixExecutable(stats) {
 }
 
 // node_modules/.pnpm/@actions+io@3.0.2/node_modules/@actions/io/lib/io.js
-var __awaiter6 = function(thisArg, _arguments, P, generator) {
+var __awaiter4 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -21897,7 +21759,7 @@ var __awaiter6 = function(thisArg, _arguments, P, generator) {
   });
 };
 function cp(source_1, dest_1) {
-  return __awaiter6(this, arguments, void 0, function* (source, dest, options = {}) {
+  return __awaiter4(this, arguments, void 0, function* (source, dest, options = {}) {
     const { force, recursive, copySourceDirectory } = readCopyOptions(options);
     const destStat = (yield exists(dest)) ? yield stat(dest) : null;
     if (destStat && destStat.isFile() && !force) {
@@ -21923,7 +21785,7 @@ function cp(source_1, dest_1) {
   });
 }
 function rmRF(inputPath) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     if (IS_WINDOWS) {
       if (/[*"<>|]/.test(inputPath)) {
         throw new Error('File path must not contain `*`, `"`, `<`, `>` or `|` on Windows');
@@ -21942,13 +21804,13 @@ function rmRF(inputPath) {
   });
 }
 function mkdirP(fsPath) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     (0, import_assert.ok)(fsPath, "a path argument must be provided");
     yield mkdir(fsPath, { recursive: true });
   });
 }
 function which(tool, check) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     if (!tool) {
       throw new Error("parameter 'tool' is required");
     }
@@ -21971,7 +21833,7 @@ function which(tool, check) {
   });
 }
 function findInPath(tool) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     if (!tool) {
       throw new Error("parameter 'tool' is required");
     }
@@ -22018,7 +21880,7 @@ function readCopyOptions(options) {
   return { force, recursive, copySourceDirectory };
 }
 function cpDirRecursive(sourceDir, destDir, currentDepth, force) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     if (currentDepth >= 255)
       return;
     currentDepth++;
@@ -22038,7 +21900,7 @@ function cpDirRecursive(sourceDir, destDir, currentDepth, force) {
   });
 }
 function copyFile2(srcFile, destFile, force) {
-  return __awaiter6(this, void 0, void 0, function* () {
+  return __awaiter4(this, void 0, void 0, function* () {
     if ((yield lstat(srcFile)).isSymbolicLink()) {
       try {
         yield lstat(destFile);
@@ -22059,7 +21921,7 @@ function copyFile2(srcFile, destFile, force) {
 
 // node_modules/.pnpm/@actions+exec@3.0.0/node_modules/@actions/exec/lib/toolrunner.js
 var import_timers = require("timers");
-var __awaiter7 = function(thisArg, _arguments, P, generator) {
+var __awaiter5 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -22295,12 +22157,12 @@ var ToolRunner = class extends events.EventEmitter {
    * @returns   number
    */
   exec() {
-    return __awaiter7(this, void 0, void 0, function* () {
+    return __awaiter5(this, void 0, void 0, function* () {
       if (!isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS2 && this.toolPath.includes("\\"))) {
         this.toolPath = path3.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
       }
       this.toolPath = yield which(this.toolPath, true);
-      return new Promise((resolve2, reject) => __awaiter7(this, void 0, void 0, function* () {
+      return new Promise((resolve2, reject) => __awaiter5(this, void 0, void 0, function* () {
         this._debug(`exec tool: ${this.toolPath}`);
         this._debug("arguments:");
         for (const arg of this.args) {
@@ -22504,7 +22366,7 @@ var ExecState = class _ExecState extends events.EventEmitter {
 };
 
 // node_modules/.pnpm/@actions+exec@3.0.0/node_modules/@actions/exec/lib/exec.js
-var __awaiter8 = function(thisArg, _arguments, P, generator) {
+var __awaiter6 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -22532,7 +22394,7 @@ var __awaiter8 = function(thisArg, _arguments, P, generator) {
   });
 };
 function exec(commandLine, args, options) {
-  return __awaiter8(this, void 0, void 0, function* () {
+  return __awaiter6(this, void 0, void 0, function* () {
     const commandArgs = argStringToArray(commandLine);
     if (commandArgs.length === 0) {
       throw new Error(`Parameter 'commandLine' cannot be null or empty.`);
@@ -22549,7 +22411,7 @@ var platform = import_os2.default.platform();
 var arch = import_os2.default.arch();
 
 // node_modules/.pnpm/@actions+core@3.0.0/node_modules/@actions/core/lib/core.js
-var __awaiter9 = function(thisArg, _arguments, P, generator) {
+var __awaiter7 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -22617,7 +22479,7 @@ function endGroup() {
   issue("endgroup");
 }
 function group(name, fn) {
-  return __awaiter9(this, void 0, void 0, function* () {
+  return __awaiter7(this, void 0, void 0, function* () {
     startGroup(name);
     let result;
     try {
@@ -22626,11 +22488,6 @@ function group(name, fn) {
       endGroup();
     }
     return result;
-  });
-}
-function getIDToken(aud) {
-  return __awaiter9(this, void 0, void 0, function* () {
-    return yield OidcClient.getIDToken(aud);
   });
 }
 
@@ -22650,7 +22507,7 @@ var util = __toESM(require("util"), 1);
 var import_assert2 = require("assert");
 
 // node_modules/.pnpm/@actions+tool-cache@4.0.0/node_modules/@actions/tool-cache/lib/retry-helper.js
-var __awaiter10 = function(thisArg, _arguments, P, generator) {
+var __awaiter8 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -22690,7 +22547,7 @@ var RetryHelper = class {
     }
   }
   execute(action, isRetryable) {
-    return __awaiter10(this, void 0, void 0, function* () {
+    return __awaiter8(this, void 0, void 0, function* () {
       let attempt = 1;
       while (attempt < this.maxAttempts) {
         try {
@@ -22713,14 +22570,14 @@ var RetryHelper = class {
     return Math.floor(Math.random() * (this.maxSeconds - this.minSeconds + 1)) + this.minSeconds;
   }
   sleep(seconds) {
-    return __awaiter10(this, void 0, void 0, function* () {
+    return __awaiter8(this, void 0, void 0, function* () {
       return new Promise((resolve2) => setTimeout(resolve2, seconds * 1e3));
     });
   }
 };
 
 // node_modules/.pnpm/@actions+tool-cache@4.0.0/node_modules/@actions/tool-cache/lib/tool-cache.js
-var __awaiter11 = function(thisArg, _arguments, P, generator) {
+var __awaiter9 = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
     return value instanceof P ? value : new P(function(resolve2) {
       resolve2(value);
@@ -22758,7 +22615,7 @@ var IS_WINDOWS3 = process.platform === "win32";
 var IS_MAC = process.platform === "darwin";
 var userAgent = "actions/tool-cache";
 function downloadTool(url, dest, auth, headers) {
-  return __awaiter11(this, void 0, void 0, function* () {
+  return __awaiter9(this, void 0, void 0, function* () {
     dest = dest || path4.join(_getTempDirectory(), crypto.randomUUID());
     yield mkdirP(path4.dirname(dest));
     debug(`Downloading ${url}`);
@@ -22767,7 +22624,7 @@ function downloadTool(url, dest, auth, headers) {
     const minSeconds = _getGlobal("TEST_DOWNLOAD_TOOL_RETRY_MIN_SECONDS", 10);
     const maxSeconds = _getGlobal("TEST_DOWNLOAD_TOOL_RETRY_MAX_SECONDS", 20);
     const retryHelper = new RetryHelper(maxAttempts, minSeconds, maxSeconds);
-    return yield retryHelper.execute(() => __awaiter11(this, void 0, void 0, function* () {
+    return yield retryHelper.execute(() => __awaiter9(this, void 0, void 0, function* () {
       return yield downloadToolAttempt(url, dest || "", auth, headers);
     }), (err) => {
       if (err instanceof HTTPError && err.httpStatusCode) {
@@ -22780,7 +22637,7 @@ function downloadTool(url, dest, auth, headers) {
   });
 }
 function downloadToolAttempt(url, dest, auth, headers) {
-  return __awaiter11(this, void 0, void 0, function* () {
+  return __awaiter9(this, void 0, void 0, function* () {
     if (fs2.existsSync(dest)) {
       throw new Error(`Destination file path ${dest} already exists`);
     }
@@ -22822,7 +22679,7 @@ function downloadToolAttempt(url, dest, auth, headers) {
   });
 }
 function extractTar(file_1, dest_1) {
-  return __awaiter11(this, arguments, void 0, function* (file, dest, flags = "xz") {
+  return __awaiter9(this, arguments, void 0, function* (file, dest, flags = "xz") {
     if (!file) {
       throw new Error("parameter 'file' is required");
     }
@@ -22865,7 +22722,7 @@ function extractTar(file_1, dest_1) {
   });
 }
 function cacheDir(sourceDir, tool, version, arch3) {
-  return __awaiter11(this, void 0, void 0, function* () {
+  return __awaiter9(this, void 0, void 0, function* () {
     version = semver2.clean(version) || version;
     arch3 = arch3 || os5.arch();
     debug(`Caching tool ${tool} ${version} ${arch3}`);
@@ -22927,7 +22784,7 @@ function findAllVersions(toolName, arch3) {
   return versions;
 }
 function _createExtractFolder(dest) {
-  return __awaiter11(this, void 0, void 0, function* () {
+  return __awaiter9(this, void 0, void 0, function* () {
     if (!dest) {
       dest = path4.join(_getTempDirectory(), crypto.randomUUID());
     }
@@ -22936,7 +22793,7 @@ function _createExtractFolder(dest) {
   });
 }
 function _createToolPath(tool, version, arch3) {
-  return __awaiter11(this, void 0, void 0, function* () {
+  return __awaiter9(this, void 0, void 0, function* () {
     const folderPath = path4.join(_getCacheDirectory(), tool, semver2.clean(version) || version, arch3 || "");
     debug(`destination ${folderPath}`);
     const markerPath = `${folderPath}.complete`;
@@ -23009,40 +22866,20 @@ async function run() {
   const snapshot = getInput("snapshot");
   const version = getInput("version");
   setSecret(token);
-  const snapshotPath = await group("Installing snapshot", () => installSnapshot(version));
+  const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
   await exec(snapshotPath, ["--version"]);
-  await group("Running snapshot compose", async () => {
+  await group("Creating snapshot", async () => {
     await exec(
       snapshotPath,
       ["compose", "--fw-cfg", "--base", base, "--upper", upper, "--registry", image, "--snapshot", snapshot],
-      {
-        env: {
-          ...process.env,
-          REGISTRY_PASSWORD: token,
-          REGISTRY_USERNAME: "x-token"
-        }
-      }
+      { env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" } }
     );
   });
 }
 async function resolveToken() {
-  const token = getInput("token");
+  const token = getInput("token") || process.env.DEPOT_SNAPSHOT_TOKEN || process.env.DEPOT_TOKEN;
   if (token) return token;
-  try {
-    const oidcToken = await getIDToken("https://depot.dev");
-    setSecret(oidcToken);
-    const res = await client.postJson(
-      "https://github.depot.dev/auth/oidc/github-actions",
-      { token: oidcToken }
-    );
-    if (res.result?.token) {
-      info("Exchanged GitHub Actions OIDC token for temporary Depot token");
-      return res.result.token;
-    }
-  } catch (err) {
-    info(`Unable to exchange GitHub OIDC token for temporary Depot token: ${err}`);
-  }
-  throw new Error("No token provided and OIDC exchange failed. Set the token input or configure OIDC.");
+  throw new Error("No token provided. Set the token input or provide a Depot token in the environment.");
 }
 async function installSnapshot(version) {
   const { url, resolvedVersion } = await resolveVersion(version);

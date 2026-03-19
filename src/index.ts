@@ -18,44 +18,22 @@ async function run() {
 
   core.setSecret(token)
 
-  const snapshotPath = await core.group('Installing snapshot', () => installSnapshot(version))
+  const snapshotPath = await core.group('Installing snapshot tool', () => installSnapshot(version))
   await exec.exec(snapshotPath, ['--version'])
 
-  await core.group('Running snapshot compose', async () => {
+  await core.group('Creating snapshot', async () => {
     await exec.exec(
       snapshotPath,
       ['compose', '--fw-cfg', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
-      {
-        env: {
-          ...process.env,
-          REGISTRY_PASSWORD: token,
-          REGISTRY_USERNAME: 'x-token',
-        },
-      },
+      {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
     )
   })
 }
 
 async function resolveToken(): Promise<string> {
-  const token = core.getInput('token')
+  const token = core.getInput('token') || process.env.DEPOT_SNAPSHOT_TOKEN || process.env.DEPOT_TOKEN
   if (token) return token
-
-  try {
-    const oidcToken = await core.getIDToken('https://depot.dev')
-    core.setSecret(oidcToken)
-    const res = await client.postJson<{ok: boolean; token: string}>(
-      'https://github.depot.dev/auth/oidc/github-actions',
-      {token: oidcToken},
-    )
-    if (res.result?.token) {
-      core.info('Exchanged GitHub Actions OIDC token for temporary Depot token')
-      return res.result.token
-    }
-  } catch (err) {
-    core.info(`Unable to exchange GitHub OIDC token for temporary Depot token: ${err}`)
-  }
-
-  throw new Error('No token provided and OIDC exchange failed. Set the token input or configure OIDC.')
+  throw new Error('No token provided. Set the token input or provide a Depot token in the environment.')
 }
 
 async function installSnapshot(version: string): Promise<string> {
