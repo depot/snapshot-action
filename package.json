@@ -1,0 +1,36 @@
+{
+  "private": true,
+  "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4",
+  "scripts": {
+    "build": "node build.cjs",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.0",
+    "@actions/exec": "3.0.0",
+    "@actions/http-client": "4.0.0",
+    "@actions/tool-cache": "4.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "24.0.4",
+    "@types/node": "24.1.0",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.0.2",
+    "prettier-plugin-organize-imports": "^3.2.3",
+    "prettier-plugin-pkg": "^0.18.0",
+    "typescript": "5.9.3"
+  },
+  "prettier": {
+    "bracketSpacing": false,
+    "printWidth": 120,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "plugins": [
+      "prettier-plugin-pkg",
+      "prettier-plugin-organize-imports"
+    ]
+  }
+}

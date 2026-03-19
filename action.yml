@@ -1,0 +1,43 @@
+name: Depot CI Snapshot
+description: Create a custom Depot CI image including any filesystem changes inside the runner.
+author: Depot
+branding:
+  icon: package
+  color: gray-dark
+runs:
+  using: node24
+  main: dist/index.js
+inputs:
+  token:
+    description: |-
+      Depot API token used as registry password. If not provided, the action
+      will attempt to exchange a GitHub Actions OIDC token for a temporary
+      Depot token.
+    default: ''
+    required: false
+  image:
+    description: |-
+      Full Depot image reference including organization, repository, and tag.
+      Example: "orgid.registry.depot.dev/repo:tag"
+    required: true
+  base:
+    description: |-
+      Base block device for the snapshot.
+    default: /dev/vdb
+    required: false
+  upper:
+    description: |-
+      Upper directory for the overlay filesystem.
+    default: /rw/.snap/upper
+    required: false
+  snapshot:
+    description: |-
+      Overlay to snapshot mapping in the format "overlay:snap".
+    default: '/rw/overlay:/rw/.snap'
+    required: false
+  version:
+    description: |-
+      Version of the snapshot binary to install. If unspecified or set to
+      "latest", the latest version will be installed.
+    default: latest
+    required: false
