@@ -23,8 +23,8 @@ async function run() {
 
   await core.group('Creating snapshot', async () => {
     await exec.exec(
-      snapshotPath,
-      ['compose', '--fw-cfg', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
+      'sudo',
+      ['-E', snapshotPath, 'compose', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
       {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
     )
   })
