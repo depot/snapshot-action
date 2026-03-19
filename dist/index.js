@@ -22856,6 +22856,7 @@ function _getGlobal(key, defaultValue) {
 }
 
 // src/index.ts
+var fs3 = __toESM(require("node:fs"));
 var path5 = __toESM(require("node:path"));
 var client = new HttpClient("depot-snapshot-action");
 async function run() {
@@ -22868,6 +22869,11 @@ async function run() {
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
   await exec(snapshotPath, ["--version"]);
+  await group("Preparing /rw", async () => {
+    if (fs3.existsSync("/rw")) return;
+    await exec("sudo", ["mkdir", "-p", "/rw"]);
+    await exec("sudo", ["mount", "/dev/vda", "/rw"]);
+  });
   await group("Creating snapshot", async () => {
     await exec(
       "sudo",
