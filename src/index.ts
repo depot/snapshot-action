@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as http from '@actions/http-client'
 import * as toolCache from '@actions/tool-cache'
+import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
@@ -20,6 +21,13 @@ async function run() {
 
   const snapshotPath = await core.group('Installing snapshot tool', () => installSnapshot(version))
   await exec.exec(snapshotPath, ['--version'])
+
+  await core.group('Preparing /rw', async () => {
+    if (fs.existsSync('/rw')) return
+
+    await exec.exec('sudo', ['mkdir', '-p', '/rw'])
+    await exec.exec('sudo', ['mount', '/dev/vda', '/rw'])
+  })
 
   await core.group('Creating snapshot', async () => {
     await exec.exec(
