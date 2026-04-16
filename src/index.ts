@@ -6,15 +6,26 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
+type DiskMode = 'overlay' | 'block'
 
+const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
 const client = new http.HttpClient('depot-snapshot-action')
+
+function detectDiskMode(): DiskMode {
+  try {
+    const raw = fs.readFileSync(FW_CFG_PATH, 'utf-8')
+    const config = JSON.parse(raw)
+    if (config.block_disk) return 'block'
+    if (config.overlay) return 'overlay'
+  } catch {
+    // fw_cfg not readable — fall through to default
+  }
+  return 'overlay'
+}
 
 async function run() {
   const token = await resolveToken()
   const image = core.getInput('image', {required: true})
-  const base = core.getInput('base')
-  const upper = core.getInput('upper')
-  const snapshot = core.getInput('snapshot')
   const version = core.getInput('version')
 
   core.setSecret(token)
@@ -22,20 +33,37 @@ async function run() {
   const snapshotPath = await core.group('Installing snapshot tool', () => installSnapshot(version))
   await exec.exec(snapshotPath, ['--version'])
 
-  await core.group('Preparing /rw', async () => {
-    if (fs.existsSync('/rw')) return
+  const mode = detectDiskMode()
+  core.info(`Detected disk mode: ${mode}`)
 
-    await exec.exec('sudo', ['mkdir', '-p', '/rw'])
-    await exec.exec('sudo', ['mount', '/dev/vda', '/rw'])
-  })
+  if (mode === 'overlay') {
+    const base = core.getInput('base')
+    const upper = core.getInput('upper')
+    const snapshot = core.getInput('snapshot')
 
-  await core.group('Creating snapshot', async () => {
-    await exec.exec(
-      'sudo',
-      ['-E', snapshotPath, 'compose', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
-      {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
-    )
-  })
+    await core.group('Preparing /rw', async () => {
+      if (fs.existsSync('/rw')) return
+
+      await exec.exec('sudo', ['mkdir', '-p', '/rw'])
+      await exec.exec('sudo', ['mount', '/dev/vda', '/rw'])
+    })
+
+    await core.group('Creating snapshot', async () => {
+      await exec.exec(
+        'sudo',
+        ['-E', snapshotPath, 'compose', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
+        {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
+      )
+    })
+  } else {
+    await core.group('Creating block snapshot', async () => {
+      await exec.exec(
+        'sudo',
+        ['-E', snapshotPath, 'block-compose', '--registry', image],
+        {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
+      )
+    })
+  }
 }
 
 async function resolveToken(): Promise<string> {
