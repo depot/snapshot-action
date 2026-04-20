@@ -59,7 +59,7 @@ async function run() {
     await core.group('Creating block snapshot', async () => {
       await exec.exec(
         'sudo',
-        ['-E', snapshotPath, 'block-compose', '--registry', image],
+        ['-E', snapshotPath, 'thin-compose', '--registry', image],
         {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
       )
     })
