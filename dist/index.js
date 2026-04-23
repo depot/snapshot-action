@@ -22858,29 +22858,58 @@ function _getGlobal(key, defaultValue) {
 // src/index.ts
 var fs3 = __toESM(require("node:fs"));
 var path5 = __toESM(require("node:path"));
+var FW_CFG_PATH = "/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw";
 var client = new HttpClient("depot-snapshot-action");
+async function detectDiskMode() {
+  try {
+    let raw = "";
+    await exec("sudo", ["cat", FW_CFG_PATH], {
+      listeners: { stdout: (data) => raw += data.toString() },
+      silent: true
+    });
+    const config = JSON.parse(raw);
+    if (config.block_disk) return "block";
+    if (config.overlay) return "overlay";
+  } catch (error2) {
+    error(`Failed to detect disk mode, assuming overlay: ${error2}`);
+  }
+  return "overlay";
+}
 async function run() {
   const token = await resolveToken();
   const image = getInput("image", { required: true });
-  const base = getInput("base");
-  const upper = getInput("upper");
-  const snapshot = getInput("snapshot");
   const version = getInput("version");
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
   await exec(snapshotPath, ["--version"]);
-  await group("Preparing /rw", async () => {
-    if (fs3.existsSync("/rw")) return;
-    await exec("sudo", ["mkdir", "-p", "/rw"]);
-    await exec("sudo", ["mount", "/dev/vda", "/rw"]);
+  const mode = await group("Detecting disk mode", async () => {
+    const m = await detectDiskMode();
+    info(`Detected disk mode: ${m}`);
+    return m;
   });
-  await group("Creating snapshot", async () => {
-    await exec(
-      "sudo",
-      ["-E", snapshotPath, "compose", "--base", base, "--upper", upper, "--registry", image, "--snapshot", snapshot],
-      { env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" } }
-    );
-  });
+  if (mode === "overlay") {
+    const base = getInput("base");
+    const upper = getInput("upper");
+    const snapshot = getInput("snapshot");
+    await group("Preparing /rw", async () => {
+      if (fs3.existsSync("/rw")) return;
+      await exec("sudo", ["mkdir", "-p", "/rw"]);
+      await exec("sudo", ["mount", "/dev/vda", "/rw"]);
+    });
+    await group("Creating snapshot", async () => {
+      await exec(
+        "sudo",
+        ["-E", snapshotPath, "compose", "--base", base, "--upper", upper, "--registry", image, "--snapshot", snapshot],
+        { env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" } }
+      );
+    });
+  } else {
+    await group("Creating block snapshot", async () => {
+      await exec("sudo", ["-E", snapshotPath, "thin-compose", "--registry", image], {
+        env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
+      });
+    });
+  }
 }
 async function resolveToken() {
   const token = getInput("token") || process.env.DEPOT_SNAPSHOT_TOKEN || process.env.DEPOT_TOKEN;
