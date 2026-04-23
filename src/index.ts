@@ -11,9 +11,13 @@ type DiskMode = 'overlay' | 'block'
 const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
 const client = new http.HttpClient('depot-snapshot-action')
 
-function detectDiskMode(): DiskMode {
+async function detectDiskMode(): Promise<DiskMode> {
   try {
-    const raw = fs.readFileSync(FW_CFG_PATH, 'utf-8')
+    let raw = ''
+    await exec.exec('sudo', ['cat', FW_CFG_PATH], {
+      listeners: {stdout: (data) => (raw += data.toString())},
+      silent: true,
+    })
     const config = JSON.parse(raw)
     if (config.block_disk) return 'block'
     if (config.overlay) return 'overlay'
@@ -33,7 +37,7 @@ async function run() {
   const snapshotPath = await core.group('Installing snapshot tool', () => installSnapshot(version))
   await exec.exec(snapshotPath, ['--version'])
 
-  const mode = detectDiskMode()
+  const mode = await detectDiskMode()
   core.info(`Detected disk mode: ${mode}`)
 
   if (mode === 'overlay') {
