@@ -21,8 +21,8 @@ async function detectDiskMode(): Promise<DiskMode> {
     const config = JSON.parse(raw)
     if (config.block_disk) return 'block'
     if (config.overlay) return 'overlay'
-  } catch {
-    // fw_cfg not readable — fall through to default
+  } catch (error) {
+    core.error(`Failed to detect disk mode, assuming overlay: ${error}`)
   }
   return 'overlay'
 }
@@ -37,8 +37,11 @@ async function run() {
   const snapshotPath = await core.group('Installing snapshot tool', () => installSnapshot(version))
   await exec.exec(snapshotPath, ['--version'])
 
-  const mode = await detectDiskMode()
-  core.info(`Detected disk mode: ${mode}`)
+  const mode = await core.group('Detecting disk mode', async () => {
+    const m = await detectDiskMode()
+    core.info(`Detected disk mode: ${m}`)
+    return m
+  })
 
   if (mode === 'overlay') {
     const base = core.getInput('base')
@@ -61,11 +64,9 @@ async function run() {
     })
   } else {
     await core.group('Creating block snapshot', async () => {
-      await exec.exec(
-        'sudo',
-        ['-E', snapshotPath, 'thin-compose', '--registry', image],
-        {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
-      )
+      await exec.exec('sudo', ['-E', snapshotPath, 'thin-compose', '--registry', image], {
+        env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
+      })
     })
   }
 }
