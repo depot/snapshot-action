@@ -34,17 +34,16 @@ jobs:
 
 ## Inputs
 
-| Input      | Required | Default                 | Description                                                     |
-| ---------- | -------- | ----------------------- | --------------------------------------------------------------- |
-| `token`    | No       | `''`                    | Depot API token used as registry password.                      |
-| `image`    | **Yes**  | —                       | Full image reference (e.g. `orgid.registry.depot.dev/repo:tag`) |
+| Input      | Required | Default                 | Description                                                                 |
+| ---------- | -------- | ----------------------- | --------------------------------------------------------------------------- |
+| `token`    | No       | `''`                    | Depot API token used as registry password.                                  |
+| `image`    | **Yes**  | —                       | Full image reference (e.g. `orgid.registry.depot.dev/repo:tag`)             |
 | `env-mask` | No       | `''`                    | Prevent certain environment variables from being persistend in the snapshot |
-| `base`     | No       | `/dev/vdb`              | Base block device                                               |
-| `upper`    | No       | `/rw/.snap/upper`       | Upper directory for overlay                                     |
-| `snapshot` | No       | `/rw/overlay:/rw/.snap` | Overlay:snap mapping                                            |
-| `version`  | No       | `latest`                | Snapshot binary version                                         |
+| `base`     | No       | `/dev/vdb`              | Base block device                                                           |
+| `upper`    | No       | `/rw/.snap/upper`       | Upper directory for overlay                                                 |
+| `snapshot` | No       | `/rw/overlay:/rw/.snap` | Overlay:snap mapping                                                        |
+| `version`  | No       | `latest`                | Snapshot binary version                                                     |
 
 ## License
-
 
 MIT License - see [LICENSE](LICENSE) for details.

@@ -22886,6 +22886,7 @@ async function run() {
   const token = await resolveToken();
   const image = getInput("image", { required: true });
   const version = getInput("version");
+  const uploadMode = resolveUploadMode();
   const maskArgs = getMultilineInput("env-mask").flatMap((mask) => ["--mask", mask]);
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
@@ -22925,21 +22926,11 @@ async function run() {
     });
   } else {
     await group("Creating block snapshot", async () => {
-<<<<<<< HEAD
-      const args = ["-E", snapshotPath, "thin-compose", "--registry", image];
+      const args = ["-E", "/usr/bin/env", "PATH=$PATH", snapshotPath, "thin-compose", "--registry", image, ...maskArgs];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
       });
-=======
-      await exec(
-        "sudo",
-        ["-E", "/usr/bin/env", "PATH=$PATH", snapshotPath, "thin-compose", "--registry", image, ...maskArgs],
-        {
-          env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
-        }
-      );
->>>>>>> 9b60a8e ([DEP-5045] feat: add ability to exclude env vars from snapshot)
     });
   }
 }
