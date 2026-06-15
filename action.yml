@@ -43,4 +43,8 @@ inputs:
     description: |-
       Snapshot registry blob upload mode: default, oci-out-of-order, or oci-x-depot.
     default: default
+  env-mask:
+    description: |-
+      A list of environment variables to exclude from the snapshot.
+    default: ''
     required: false

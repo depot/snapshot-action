@@ -33,6 +33,7 @@ async function run() {
   const image = core.getInput('image', {required: true})
   const version = core.getInput('version')
   const uploadMode = resolveUploadMode()
+  const maskArgs = core.getMultilineInput('env-mask').flatMap((mask) => ['--mask', mask])
 
   core.setSecret(token)
 
@@ -78,7 +79,7 @@ async function run() {
     })
   } else {
     await core.group('Creating block snapshot', async () => {
-      const args = ['-E', snapshotPath, 'thin-compose', '--registry', image]
+      const args = ['-E', '/usr/bin/env', 'PATH=$PATH', snapshotPath, 'thin-compose', '--registry', image, ...maskArgs]
       if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
       await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
