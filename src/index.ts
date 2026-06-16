@@ -128,7 +128,7 @@ async function resolveVersion(version: string) {
   const response: ApiResponse = JSON.parse(body)
   if (!response.ok) throw new Error(response.error)
 
-  const matches = response.url.match(/snapshot\/v(\d+\.\d+\.\d+)/)
+  const matches = response.url.match(/snapshot\/v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)(?:\/|$)/)
   const resolvedVersion = matches ? matches[1] : version
   return {url: response.url, resolvedVersion}
 }
