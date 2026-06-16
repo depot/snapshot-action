@@ -39,3 +39,8 @@ inputs:
       "latest", the latest version will be installed.
     default: latest
     required: false
+  upload-mode:
+    description: |-
+      Snapshot registry blob upload mode: default, oci-out-of-order, or oci-x-depot.
+    default: default
+    required: false

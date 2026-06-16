@@ -7,6 +7,7 @@ import * as path from 'node:path'
 
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
 type DiskMode = 'overlay' | 'block'
+type UploadMode = 'default' | 'oci-out-of-order' | 'oci-x-depot'
 
 const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
 const client = new http.HttpClient('depot-snapshot-action')
@@ -31,6 +32,7 @@ async function run() {
   const token = await resolveToken()
   const image = core.getInput('image', {required: true})
   const version = core.getInput('version')
+  const uploadMode = resolveUploadMode()
 
   core.setSecret(token)
 
@@ -56,19 +58,43 @@ async function run() {
     })
 
     await core.group('Creating snapshot', async () => {
-      await exec.exec(
-        'sudo',
-        ['-E', snapshotPath, 'compose', '--base', base, '--upper', upper, '--registry', image, '--snapshot', snapshot],
-        {env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'}},
-      )
+      const args = [
+        '-E',
+        snapshotPath,
+        'compose',
+        '--base',
+        base,
+        '--upper',
+        upper,
+        '--registry',
+        image,
+        '--snapshot',
+        snapshot,
+      ]
+      if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
+      await exec.exec('sudo', args, {
+        env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
+      })
     })
   } else {
     await core.group('Creating block snapshot', async () => {
-      await exec.exec('sudo', ['-E', snapshotPath, 'thin-compose', '--registry', image], {
+      const args = ['-E', snapshotPath, 'thin-compose', '--registry', image]
+      if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
+      await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
       })
     })
   }
+}
+
+function resolveUploadMode(): UploadMode {
+  const uploadMode = core.getInput('upload-mode') || 'default'
+
+  if (uploadMode === 'default' || uploadMode === 'oci-out-of-order' || uploadMode === 'oci-x-depot') {
+    return uploadMode
+  }
+
+  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`)
 }
 
 async function resolveToken(): Promise<string> {

@@ -22879,6 +22879,7 @@ async function run() {
   const token = await resolveToken();
   const image = getInput("image", { required: true });
   const version = getInput("version");
+  const uploadMode = resolveUploadMode();
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
   await exec(snapshotPath, ["--version"]);
@@ -22897,19 +22898,40 @@ async function run() {
       await exec("sudo", ["mount", "/dev/vda", "/rw"]);
     });
     await group("Creating snapshot", async () => {
-      await exec(
-        "sudo",
-        ["-E", snapshotPath, "compose", "--base", base, "--upper", upper, "--registry", image, "--snapshot", snapshot],
-        { env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" } }
-      );
+      const args = [
+        "-E",
+        snapshotPath,
+        "compose",
+        "--base",
+        base,
+        "--upper",
+        upper,
+        "--registry",
+        image,
+        "--snapshot",
+        snapshot
+      ];
+      if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
+      await exec("sudo", args, {
+        env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
+      });
     });
   } else {
     await group("Creating block snapshot", async () => {
-      await exec("sudo", ["-E", snapshotPath, "thin-compose", "--registry", image], {
+      const args = ["-E", snapshotPath, "thin-compose", "--registry", image];
+      if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
+      await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
       });
     });
   }
+}
+function resolveUploadMode() {
+  const uploadMode = getInput("upload-mode") || "default";
+  if (uploadMode === "default" || uploadMode === "oci-out-of-order" || uploadMode === "oci-x-depot") {
+    return uploadMode;
+  }
+  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`);
 }
 async function resolveToken() {
   const token = getInput("token") || process.env.DEPOT_SNAPSHOT_TOKEN || process.env.DEPOT_TOKEN;
