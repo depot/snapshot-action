@@ -33,6 +33,7 @@ async function run() {
   const image = core.getInput('image', {required: true})
   const version = core.getInput('version')
   const uploadMode = resolveUploadMode()
+  const maxAge = core.getInput('max-age')
   const maskArgs = core.getMultilineInput('env-mask').flatMap((mask) => ['--mask', mask])
 
   core.setSecret(token)
@@ -73,6 +74,7 @@ async function run() {
         snapshot,
       ]
       if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
+      if (maxAge) args.push('--max-age', maxAge)
       await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
       })
@@ -90,6 +92,7 @@ async function run() {
         ...maskArgs,
       ]
       if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
+      if (maxAge) args.push('--max-age', maxAge)
       await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
       })

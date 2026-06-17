@@ -22887,6 +22887,7 @@ async function run() {
   const image = getInput("image", { required: true });
   const version = getInput("version");
   const uploadMode = resolveUploadMode();
+  const maxAge = getInput("max-age");
   const maskArgs = getMultilineInput("env-mask").flatMap((mask) => ["--mask", mask]);
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
@@ -22920,6 +22921,7 @@ async function run() {
         snapshot
       ];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
+      if (maxAge) args.push("--max-age", maxAge);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
       });
@@ -22937,6 +22939,7 @@ async function run() {
         ...maskArgs
       ];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
+      if (maxAge) args.push("--max-age", maxAge);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
       });
