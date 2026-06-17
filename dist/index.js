@@ -22456,6 +22456,13 @@ function getInput(name, options) {
   }
   return val.trim();
 }
+function getMultilineInput(name, options) {
+  const inputs = getInput(name, options).split("\n").filter((x) => x !== "");
+  if (options && options.trimWhitespace === false) {
+    return inputs;
+  }
+  return inputs.map((input) => input.trim());
+}
 function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
@@ -22880,6 +22887,7 @@ async function run() {
   const image = getInput("image", { required: true });
   const version = getInput("version");
   const uploadMode = resolveUploadMode();
+  const maskArgs = getMultilineInput("env-mask").flatMap((mask) => ["--mask", mask]);
   setSecret(token);
   const snapshotPath = await group("Installing snapshot tool", () => installSnapshot(version));
   await exec(snapshotPath, ["--version"]);
@@ -22918,7 +22926,7 @@ async function run() {
     });
   } else {
     await group("Creating block snapshot", async () => {
-      const args = ["-E", snapshotPath, "thin-compose", "--registry", image];
+      const args = ["-E", "/usr/bin/env", "PATH=$PATH", snapshotPath, "thin-compose", "--registry", image, ...maskArgs];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
