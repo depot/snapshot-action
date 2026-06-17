@@ -22926,7 +22926,16 @@ async function run() {
     });
   } else {
     await group("Creating block snapshot", async () => {
-      const args = ["-E", "/usr/bin/env", "PATH=$PATH", snapshotPath, "thin-compose", "--registry", image, ...maskArgs];
+      const args = [
+        "-E",
+        "/usr/bin/env",
+        `PATH=${process.env.PATH ?? ""}`,
+        snapshotPath,
+        "thin-compose",
+        "--registry",
+        image,
+        ...maskArgs
+      ];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
