@@ -7,7 +7,6 @@ import * as path from 'node:path'
 
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
 type DiskMode = 'overlay' | 'block'
-type UploadMode = 'default' | 'oci-out-of-order' | 'oci-x-depot'
 type ImageRef = {scheme: string; host: string; repository: string; reference: string}
 
 const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
@@ -34,7 +33,7 @@ async function run() {
   const images = resolveImages()
   const registryArgs = images.flatMap((image) => ['--registry', image])
   const version = core.getInput('version')
-  const uploadMode = resolveUploadMode()
+  const snapshotFlags = resolveSnapshotFlags()
   const maxAge = core.getInput('max-age')
   const maskArgs = core.getMultilineInput('env-mask').flatMap((mask) => ['--mask', mask])
 
@@ -66,6 +65,7 @@ async function run() {
         '-E',
         snapshotPath,
         'compose',
+        ...snapshotFlags,
         '--base',
         base,
         '--upper',
@@ -74,7 +74,6 @@ async function run() {
         '--snapshot',
         snapshot,
       ]
-      if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
       if (maxAge) args.push('--max-age', maxAge)
       await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
@@ -88,10 +87,10 @@ async function run() {
         `PATH=${process.env.PATH ?? ''}`,
         snapshotPath,
         'thin-compose',
+        ...snapshotFlags,
         ...registryArgs,
         ...maskArgs,
       ]
-      if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
       if (maxAge) args.push('--max-age', maxAge)
       await exec.exec('sudo', args, {
         env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
@@ -147,14 +146,55 @@ function formatImageRepository(ref: ImageRef): string {
   return `${ref.scheme}://${ref.host}/${ref.repository}`
 }
 
-function resolveUploadMode(): UploadMode {
-  const uploadMode = core.getInput('upload-mode') || 'default'
+function resolveSnapshotFlags(): string[] {
+  return core.getMultilineInput('snapshot-flags').flatMap(splitCliArgs)
+}
 
-  if (uploadMode === 'default' || uploadMode === 'oci-out-of-order' || uploadMode === 'oci-x-depot') {
-    return uploadMode
+function splitCliArgs(input: string): string[] {
+  const args: string[] = []
+  let current = ''
+  let quote: '"' | "'" | null = null
+  let escaping = false
+
+  for (const char of input) {
+    if (escaping) {
+      current += char
+      escaping = false
+      continue
+    }
+
+    if (char === '\\') {
+      escaping = true
+      continue
+    }
+
+    if (quote) {
+      if (char === quote) quote = null
+      else current += char
+      continue
+    }
+
+    if (char === '"' || char === "'") {
+      quote = char
+      continue
+    }
+
+    if (/\s/.test(char)) {
+      if (current) {
+        args.push(current)
+        current = ''
+      }
+      continue
+    }
+
+    current += char
   }
 
-  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`)
+  if (escaping) current += '\\'
+  if (quote) throw new Error(`Invalid snapshot-flags: unterminated ${quote} quote.`)
+  if (current) args.push(current)
+
+  return args
 }
 
 async function resolveToken(): Promise<string> {

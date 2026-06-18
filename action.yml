@@ -40,10 +40,10 @@ inputs:
       "latest", the latest version will be installed.
     default: latest
     required: false
-  upload-mode:
+  snapshot-flags:
     description: |-
-      Snapshot registry blob upload mode: default, oci-out-of-order, or oci-x-depot.
-    default: default
+      Additional snapshot command flags for internal diagnostics and experiments.
+    default: ''
   max-age:
     description: |-
       Optional tag TTL for the snapshot manifest. Supports s, m, h, and d units,
