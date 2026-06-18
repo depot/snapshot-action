@@ -22884,7 +22884,8 @@ async function detectDiskMode() {
 }
 async function run() {
   const token = await resolveToken();
-  const image = getInput("image", { required: true });
+  const images = resolveImages();
+  const registryArgs = images.flatMap((image) => ["--registry", image]);
   const version = getInput("version");
   const uploadMode = resolveUploadMode();
   const maxAge = getInput("max-age");
@@ -22915,8 +22916,7 @@ async function run() {
         base,
         "--upper",
         upper,
-        "--registry",
-        image,
+        ...registryArgs,
         "--snapshot",
         snapshot
       ];
@@ -22934,8 +22934,7 @@ async function run() {
         `PATH=${process.env.PATH ?? ""}`,
         snapshotPath,
         "thin-compose",
-        "--registry",
-        image,
+        ...registryArgs,
         ...maskArgs
       ];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
@@ -22945,6 +22944,11 @@ async function run() {
       });
     });
   }
+}
+function resolveImages() {
+  const images = getMultilineInput("image", { required: true }).map((image) => image.trim()).filter(Boolean);
+  if (images.length === 0) throw new Error("No image provided. Set the image input to one or more image references.");
+  return images;
 }
 function resolveUploadMode() {
   const uploadMode = getInput("upload-mode") || "default";

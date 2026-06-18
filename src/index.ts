@@ -30,7 +30,8 @@ async function detectDiskMode(): Promise<DiskMode> {
 
 async function run() {
   const token = await resolveToken()
-  const image = core.getInput('image', {required: true})
+  const images = resolveImages()
+  const registryArgs = images.flatMap((image) => ['--registry', image])
   const version = core.getInput('version')
   const uploadMode = resolveUploadMode()
   const maxAge = core.getInput('max-age')
@@ -68,8 +69,7 @@ async function run() {
         base,
         '--upper',
         upper,
-        '--registry',
-        image,
+        ...registryArgs,
         '--snapshot',
         snapshot,
       ]
@@ -87,8 +87,7 @@ async function run() {
         `PATH=${process.env.PATH ?? ''}`,
         snapshotPath,
         'thin-compose',
-        '--registry',
-        image,
+        ...registryArgs,
         ...maskArgs,
       ]
       if (uploadMode !== 'default') args.push('--upload-mode', uploadMode)
@@ -98,6 +97,15 @@ async function run() {
       })
     })
   }
+}
+
+function resolveImages(): string[] {
+  const images = core
+    .getMultilineInput('image', {required: true})
+    .map((image) => image.trim())
+    .filter(Boolean)
+  if (images.length === 0) throw new Error('No image provided. Set the image input to one or more image references.')
+  return images
 }
 
 function resolveUploadMode(): UploadMode {
