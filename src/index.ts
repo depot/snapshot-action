@@ -8,6 +8,7 @@ import * as path from 'node:path'
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
 type DiskMode = 'overlay' | 'block'
 type UploadMode = 'default' | 'oci-out-of-order' | 'oci-x-depot'
+type ImageRef = {scheme: string; host: string; repository: string; reference: string}
 
 const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
 const client = new http.HttpClient('depot-snapshot-action')
@@ -105,7 +106,45 @@ function resolveImages(): string[] {
     .map((image) => image.trim())
     .filter(Boolean)
   if (images.length === 0) throw new Error('No image provided. Set the image input to one or more image references.')
+
+  const refs = images.map(parseImageRef)
+  const first = refs[0]
+  for (const ref of refs.slice(1)) {
+    if (ref.scheme !== first.scheme || ref.host !== first.host || ref.repository !== first.repository) {
+      throw new Error(
+        `The image input supports multi-tag publishing only. All image refs must use the same registry repository; got ${formatImageRepository(
+          first,
+        )} and ${formatImageRepository(ref)}.`,
+      )
+    }
+  }
+  if (refs.length > 1) core.info(`Publishing snapshot to ${refs.length} tags in ${formatImageRepository(first)}`)
+
   return images
+}
+
+function parseImageRef(image: string): ImageRef {
+  const scheme = image.startsWith('http://') ? 'http' : image.startsWith('https://') ? 'https' : 'https'
+  const rest = image.replace(/^https?:\/\//, '')
+  const slashIndex = rest.indexOf('/')
+  if (slashIndex === -1) throw new Error(`Invalid image ref "${image}": expected registry/repository:tag`)
+
+  const host = rest.slice(0, slashIndex)
+  const path = rest.slice(slashIndex + 1)
+  if (!path) throw new Error(`Invalid image ref "${image}": repository is empty`)
+
+  const lastSlash = path.lastIndexOf('/')
+  const lastColon = path.lastIndexOf(':')
+  const repository = lastColon > lastSlash ? path.slice(0, lastColon) : path
+  const reference = lastColon > lastSlash ? path.slice(lastColon + 1) : 'latest'
+  if (!repository) throw new Error(`Invalid image ref "${image}": repository is empty`)
+  if (!reference) throw new Error(`Invalid image ref "${image}": tag is empty`)
+
+  return {scheme, host, repository, reference}
+}
+
+function formatImageRepository(ref: ImageRef): string {
+  return `${ref.scheme}://${ref.host}/${ref.repository}`
 }
 
 function resolveUploadMode(): UploadMode {

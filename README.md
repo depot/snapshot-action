@@ -17,6 +17,8 @@ jobs:
           max-age: 2d
 ```
 
+When `image` contains multiple refs, they must point to the same registry repository. This is multi-tag publishing, not multi-registry replication.
+
 ### Preventing certain environment variables to be captured in the snapshot
 
 Some well-known secrets, API tokens, and secret prefixes are excluded from the snapshot by default. For the detailed list, see the [documentation](https://depot.dev/docs/ci/how-to-guides/custom-images#snapshot-a-sandbox-to-build-a-custom-image).
