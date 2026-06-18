@@ -22887,7 +22887,7 @@ async function run() {
   const images = resolveImages();
   const registryArgs = images.flatMap((image) => ["--registry", image]);
   const version = getInput("version");
-  const uploadMode = resolveUploadMode();
+  const snapshotFlags = resolveSnapshotFlags();
   const maxAge = getInput("max-age");
   const maskArgs = getMultilineInput("env-mask").flatMap((mask) => ["--mask", mask]);
   setSecret(token);
@@ -22912,6 +22912,7 @@ async function run() {
         "-E",
         snapshotPath,
         "compose",
+        ...snapshotFlags,
         "--base",
         base,
         "--upper",
@@ -22920,7 +22921,6 @@ async function run() {
         "--snapshot",
         snapshot
       ];
-      if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
       if (maxAge) args.push("--max-age", maxAge);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
@@ -22934,10 +22934,10 @@ async function run() {
         `PATH=${process.env.PATH ?? ""}`,
         snapshotPath,
         "thin-compose",
+        ...snapshotFlags,
         ...registryArgs,
         ...maskArgs
       ];
-      if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
       if (maxAge) args.push("--max-age", maxAge);
       await exec("sudo", args, {
         env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
@@ -22981,12 +22981,46 @@ function parseImageRef(image) {
 function formatImageRepository(ref) {
   return `${ref.scheme}://${ref.host}/${ref.repository}`;
 }
-function resolveUploadMode() {
-  const uploadMode = getInput("upload-mode") || "default";
-  if (uploadMode === "default" || uploadMode === "oci-out-of-order" || uploadMode === "oci-x-depot") {
-    return uploadMode;
+function resolveSnapshotFlags() {
+  return getMultilineInput("snapshot-flags").flatMap(splitCliArgs);
+}
+function splitCliArgs(input) {
+  const args = [];
+  let current = "";
+  let quote = null;
+  let escaping = false;
+  for (const char of input) {
+    if (escaping) {
+      current += char;
+      escaping = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaping = true;
+      continue;
+    }
+    if (quote) {
+      if (char === quote) quote = null;
+      else current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      if (current) {
+        args.push(current);
+        current = "";
+      }
+      continue;
+    }
+    current += char;
   }
-  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`);
+  if (escaping) current += "\\";
+  if (quote) throw new Error(`Invalid snapshot-flags: unterminated ${quote} quote.`);
+  if (current) args.push(current);
+  return args;
 }
 async function resolveToken() {
   const token = getInput("token") || process.env.DEPOT_SNAPSHOT_TOKEN || process.env.DEPOT_TOKEN;
