@@ -16,6 +16,7 @@ inputs:
   image:
     description: |-
       Full Depot image reference including organization, repository, and tag.
+      Can be a single ref or a newline-delimited list of refs in the same repository.
       Example: "orgid.registry.depot.dev/repo:tag"
     required: true
   base:

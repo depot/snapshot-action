@@ -22884,7 +22884,8 @@ async function detectDiskMode() {
 }
 async function run() {
   const token = await resolveToken();
-  const image = getInput("image", { required: true });
+  const images = resolveImages();
+  const registryArgs = images.flatMap((image) => ["--registry", image]);
   const version = getInput("version");
   const uploadMode = resolveUploadMode();
   const maxAge = getInput("max-age");
@@ -22915,8 +22916,7 @@ async function run() {
         base,
         "--upper",
         upper,
-        "--registry",
-        image,
+        ...registryArgs,
         "--snapshot",
         snapshot
       ];
@@ -22934,8 +22934,7 @@ async function run() {
         `PATH=${process.env.PATH ?? ""}`,
         snapshotPath,
         "thin-compose",
-        "--registry",
-        image,
+        ...registryArgs,
         ...maskArgs
       ];
       if (uploadMode !== "default") args.push("--upload-mode", uploadMode);
@@ -22945,6 +22944,42 @@ async function run() {
       });
     });
   }
+}
+function resolveImages() {
+  const images = getMultilineInput("image", { required: true }).map((image) => image.trim()).filter(Boolean);
+  if (images.length === 0) throw new Error("No image provided. Set the image input to one or more image references.");
+  const refs = images.map(parseImageRef);
+  const first = refs[0];
+  for (const ref of refs.slice(1)) {
+    if (ref.scheme !== first.scheme || ref.host !== first.host || ref.repository !== first.repository) {
+      throw new Error(
+        `The image input supports multi-tag publishing only. All image refs must use the same registry repository; got ${formatImageRepository(
+          first
+        )} and ${formatImageRepository(ref)}.`
+      );
+    }
+  }
+  if (refs.length > 1) info(`Publishing snapshot to ${refs.length} tags in ${formatImageRepository(first)}`);
+  return images;
+}
+function parseImageRef(image) {
+  const scheme = image.startsWith("http://") ? "http" : image.startsWith("https://") ? "https" : "https";
+  const rest = image.replace(/^https?:\/\//, "");
+  const slashIndex = rest.indexOf("/");
+  if (slashIndex === -1) throw new Error(`Invalid image ref "${image}": expected registry/repository:tag`);
+  const host = rest.slice(0, slashIndex);
+  const path6 = rest.slice(slashIndex + 1);
+  if (!path6) throw new Error(`Invalid image ref "${image}": repository is empty`);
+  const lastSlash = path6.lastIndexOf("/");
+  const lastColon = path6.lastIndexOf(":");
+  const repository = lastColon > lastSlash ? path6.slice(0, lastColon) : path6;
+  const reference = lastColon > lastSlash ? path6.slice(lastColon + 1) : "latest";
+  if (!repository) throw new Error(`Invalid image ref "${image}": repository is empty`);
+  if (!reference) throw new Error(`Invalid image ref "${image}": tag is empty`);
+  return { scheme, host, repository, reference };
+}
+function formatImageRepository(ref) {
+  return `${ref.scheme}://${ref.host}/${ref.repository}`;
 }
 function resolveUploadMode() {
   const uploadMode = getInput("upload-mode") || "default";
