@@ -22888,6 +22888,8 @@ async function run() {
   const registryArgs = images.flatMap((image) => ["--registry", image]);
   const version = getInput("version");
   const snapshotFlags = resolveSnapshotFlags();
+  const uploadMode = resolveUploadMode();
+  const uploadModeArgs = uploadMode === "default" ? [] : ["--upload-mode", uploadMode];
   const maxAge = getInput("max-age");
   const maskArgs = getMultilineInput("env-mask").flatMap((mask) => ["--mask", mask]);
   setSecret(token);
@@ -22912,6 +22914,7 @@ async function run() {
         "-E",
         snapshotPath,
         "compose",
+        ...uploadModeArgs,
         ...snapshotFlags,
         "--base",
         base,
@@ -22934,6 +22937,7 @@ async function run() {
         `PATH=${process.env.PATH ?? ""}`,
         snapshotPath,
         "thin-compose",
+        ...uploadModeArgs,
         ...snapshotFlags,
         ...registryArgs,
         ...maskArgs
@@ -22961,6 +22965,13 @@ function resolveImages() {
   }
   if (refs.length > 1) info(`Publishing snapshot to ${refs.length} tags in ${formatImageRepository(first)}`);
   return images;
+}
+function resolveUploadMode() {
+  const uploadMode = getInput("upload-mode") || "oci-x-depot";
+  if (uploadMode === "default" || uploadMode === "oci-out-of-order" || uploadMode === "oci-x-depot") {
+    return uploadMode;
+  }
+  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`);
 }
 function parseImageRef(image) {
   const scheme = image.startsWith("http://") ? "http" : image.startsWith("https://") ? "https" : "https";

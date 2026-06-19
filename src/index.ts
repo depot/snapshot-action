@@ -8,6 +8,7 @@ import * as path from 'node:path'
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
 type DiskMode = 'overlay' | 'block'
 type ImageRef = {scheme: string; host: string; repository: string; reference: string}
+type UploadMode = 'default' | 'oci-out-of-order' | 'oci-x-depot'
 
 const FW_CFG_PATH = '/sys/firmware/qemu_fw_cfg/by_name/opt/dev.depot/config/raw'
 const client = new http.HttpClient('depot-snapshot-action')
@@ -34,6 +35,8 @@ async function run() {
   const registryArgs = images.flatMap((image) => ['--registry', image])
   const version = core.getInput('version')
   const snapshotFlags = resolveSnapshotFlags()
+  const uploadMode = resolveUploadMode()
+  const uploadModeArgs = uploadMode === 'default' ? [] : ['--upload-mode', uploadMode]
   const maxAge = core.getInput('max-age')
   const maskArgs = core.getMultilineInput('env-mask').flatMap((mask) => ['--mask', mask])
 
@@ -65,6 +68,7 @@ async function run() {
         '-E',
         snapshotPath,
         'compose',
+        ...uploadModeArgs,
         ...snapshotFlags,
         '--base',
         base,
@@ -87,6 +91,7 @@ async function run() {
         `PATH=${process.env.PATH ?? ''}`,
         snapshotPath,
         'thin-compose',
+        ...uploadModeArgs,
         ...snapshotFlags,
         ...registryArgs,
         ...maskArgs,
@@ -120,6 +125,16 @@ function resolveImages(): string[] {
   if (refs.length > 1) core.info(`Publishing snapshot to ${refs.length} tags in ${formatImageRepository(first)}`)
 
   return images
+}
+
+function resolveUploadMode(): UploadMode {
+  const uploadMode = core.getInput('upload-mode') || 'oci-x-depot'
+
+  if (uploadMode === 'default' || uploadMode === 'oci-out-of-order' || uploadMode === 'oci-x-depot') {
+    return uploadMode
+  }
+
+  throw new Error(`Invalid upload-mode "${uploadMode}". Expected default, oci-out-of-order, or oci-x-depot.`)
 }
 
 function parseImageRef(image: string): ImageRef {

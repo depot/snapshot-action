@@ -44,6 +44,11 @@ inputs:
     description: |-
       Additional snapshot command flags for internal diagnostics and experiments.
     default: ''
+  upload-mode:
+    description: |-
+      Snapshot registry blob upload mode: default, oci-out-of-order, or oci-x-depot.
+    default: oci-x-depot
+    required: false
   max-age:
     description: |-
       Optional tag TTL for the snapshot manifest. Supports s, m, h, and d units,

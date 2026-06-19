@@ -39,16 +39,17 @@ jobs:
 
 ## Inputs
 
-| Input      | Required | Default                 | Description                                                                                                       |
-| ---------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `token`    | No       | `''`                    | Depot API token used as registry password.                                                                        |
-| `image`    | **Yes**  | —                       | Full image reference, or newline-delimited refs in the same repository (e.g. `orgid.registry.depot.dev/repo:tag`) |
-| `env-mask` | No       | `''`                    | Prevent certain environment variables from being persistend in the snapshot                                       |
-| `max-age`  | No       | `''`                    | Optional snapshot tag TTL. Supports `s`, `m`, `h`, and `d` units, for example `2d` or `1h30m`.                    |
-| `base`     | No       | `/dev/vdb`              | Base block device                                                                                                 |
-| `upper`    | No       | `/rw/.snap/upper`       | Upper directory for overlay                                                                                       |
-| `snapshot` | No       | `/rw/overlay:/rw/.snap` | Overlay:snap mapping                                                                                              |
-| `version`  | No       | `latest`                | Snapshot binary version                                                                                           |
+| Input         | Required | Default                 | Description                                                                                                       |
+| ------------- | -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `token`       | No       | `''`                    | Depot API token used as registry password.                                                                        |
+| `image`       | **Yes**  | —                       | Full image reference, or newline-delimited refs in the same repository (e.g. `orgid.registry.depot.dev/repo:tag`) |
+| `env-mask`    | No       | `''`                    | Prevent certain environment variables from being persistend in the snapshot                                       |
+| `max-age`     | No       | `''`                    | Optional snapshot tag TTL. Supports `s`, `m`, `h`, and `d` units, for example `2d` or `1h30m`.                    |
+| `upload-mode` | No       | `oci-x-depot`           | Snapshot registry blob upload mode: `default`, `oci-out-of-order`, or `oci-x-depot`.                              |
+| `base`        | No       | `/dev/vdb`              | Base block device                                                                                                 |
+| `upper`       | No       | `/rw/.snap/upper`       | Upper directory for overlay                                                                                       |
+| `snapshot`    | No       | `/rw/overlay:/rw/.snap` | Overlay:snap mapping                                                                                              |
+| `version`     | No       | `latest`                | Snapshot binary version                                                                                           |
 
 ## License
 
