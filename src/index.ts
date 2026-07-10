@@ -85,8 +85,9 @@ async function run() {
     })
   } else {
     await core.group('Creating block snapshot', async () => {
-      // Linux removes LD_* variables before the setuid sudo process starts.
-      // Carry the value under an inert, masked name so snapshot can persist it
+      // actions/setup-python uses LD_LIBRARY_PATH so its relocatable CPython
+      // can find libpython. Linux removes LD_* variables before the setuid sudo
+      // process starts, so carry it under an inert, masked name for persistence
       // without exposing privileged child processes to library injection.
       const snapshotEnvironment = {
         ...process.env,
