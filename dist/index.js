@@ -22931,6 +22931,12 @@ async function run() {
     });
   } else {
     await group("Creating block snapshot", async () => {
+      const snapshotEnvironment = {
+        ...process.env,
+        REGISTRY_PASSWORD: token,
+        REGISTRY_USERNAME: "x-token",
+        ...process.env.LD_LIBRARY_PATH === void 0 ? {} : { DEPOT_SNAPSHOT_LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH }
+      };
       const args = [
         "-E",
         "/usr/bin/env",
@@ -22944,7 +22950,7 @@ async function run() {
       ];
       if (maxAge) args.push("--max-age", maxAge);
       await exec("sudo", args, {
-        env: { ...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: "x-token" }
+        env: snapshotEnvironment
       });
     });
   }

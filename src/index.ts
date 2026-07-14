@@ -85,6 +85,18 @@ async function run() {
     })
   } else {
     await core.group('Creating block snapshot', async () => {
+      // actions/setup-python uses LD_LIBRARY_PATH so its relocatable CPython
+      // can find libpython. Linux removes LD_* variables before the setuid sudo
+      // process starts, so carry it under an inert, masked name for persistence
+      // without exposing privileged child processes to library injection.
+      const snapshotEnvironment = {
+        ...process.env,
+        REGISTRY_PASSWORD: token,
+        REGISTRY_USERNAME: 'x-token',
+        ...(process.env.LD_LIBRARY_PATH === undefined
+          ? {}
+          : {DEPOT_SNAPSHOT_LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH}),
+      }
       const args = [
         '-E',
         '/usr/bin/env',
@@ -98,7 +110,7 @@ async function run() {
       ]
       if (maxAge) args.push('--max-age', maxAge)
       await exec.exec('sudo', args, {
-        env: {...process.env, REGISTRY_PASSWORD: token, REGISTRY_USERNAME: 'x-token'},
+        env: snapshotEnvironment,
       })
     })
   }
