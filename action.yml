@@ -8,6 +8,12 @@ runs:
   using: node24
   main: dist/index.js
 inputs:
+  job-token:
+    description: |-
+      Current Depot CI job token for host-overlay snapshots. Separate from registry authorization.
+      For example, secrets.__DEPOT_CI_JOB_TOKEN__. Unused for guest thin-pool snapshots.
+    default: ''
+    required: false
   token:
     description: |-
       Depot API token used as registry password.
