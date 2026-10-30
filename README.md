@@ -54,3 +54,21 @@ jobs:
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+### Host-overlay roots
+
+Host-overlay VMs require the matching snapshot CLI and API/VM3 snapshot feature.
+The action uses `host-compose` instead of guest `thin-compose`. Supply a current
+job credential separately from the registry token:
+
+```yaml
+- uses: depot/snapshot-action@<host-snapshot-version>
+  with:
+    image: org.registry.depot.dev/example:latest
+    token: ${{ secrets.DEPOT_TOKEN }}
+    job-token: ${{ secrets.__DEPOT_CI_JOB_TOKEN__ }}
+```
+
+The job credential can control only its current running sandbox. Snapshot capture
+briefly freezes the root; registry upload runs after thaw. Cleanup releases the
+temporary read-only device. The resulting registry image remains reusable.

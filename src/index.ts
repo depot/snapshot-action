@@ -4,9 +4,10 @@ import * as http from '@actions/http-client'
 import * as toolCache from '@actions/tool-cache'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import {publishHostSnapshot} from './host-snapshot'
 
 type ApiResponse = {ok: true; url: string} | {ok: false; error: string}
-type DiskMode = 'overlay' | 'block'
+type DiskMode = 'overlay' | 'block' | 'host'
 type ImageRef = {scheme: string; host: string; repository: string; reference: string}
 type UploadMode = 'default' | 'oci-out-of-order' | 'oci-x-depot'
 
@@ -21,12 +22,13 @@ async function detectDiskMode(): Promise<DiskMode> {
       silent: true,
     })
     const config = JSON.parse(raw)
+    if (config.block_disk?.host_overlay) return 'host'
     if (config.block_disk) return 'block'
     if (config.overlay) return 'overlay'
   } catch (error) {
-    core.error(`Failed to detect disk mode, assuming overlay: ${error}`)
+    throw new Error(`Cannot identify the VM root layout: ${error}`)
   }
-  return 'overlay'
+  throw new Error('VM firmware does not describe a supported root layout')
 }
 
 async function run() {
@@ -51,7 +53,14 @@ async function run() {
     return m
   })
 
-  if (mode === 'overlay') {
+  if (mode === 'host') {
+    await publishHostSnapshot(
+      snapshotPath,
+      [...uploadModeArgs, ...snapshotFlags, ...registryArgs, ...maskArgs, ...(maxAge ? ['--max-age', maxAge] : [])],
+      maskArgs,
+      token,
+    )
+  } else if (mode === 'overlay') {
     const base = core.getInput('base')
     const upper = core.getInput('upper')
     const snapshot = core.getInput('snapshot')
