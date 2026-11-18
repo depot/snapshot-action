@@ -12,6 +12,7 @@ interface HostSnapshot {
   serial?: string
   logicalBytes?: string
   chunkBitmap?: string
+  fineChunkRuns?: string
   captureNanoseconds?: string
   timingsNs?: Record<string, string>
 }
@@ -70,6 +71,9 @@ export async function publishHostSnapshot(
         serial: snapshot.serial,
         logical_bytes: Number(snapshot.logicalBytes),
         chunk_bitmap: Array.from(Buffer.from(snapshot.chunkBitmap, 'base64')),
+        fine_chunk_runs: snapshot.fineChunkRuns
+          ? Array.from(Buffer.from(snapshot.fineChunkRuns, 'base64'))
+          : undefined,
       }),
       {mode: 0o600},
     )
