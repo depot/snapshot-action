@@ -4,7 +4,7 @@ const path = require('node:path')
 const vm = require('node:vm')
 const esbuild = require('esbuild')
 
-async function check(prepareFails) {
+async function check(prepareFails, fineChunkRuns) {
   const calls = []
   const commands = []
   let descriptor
@@ -36,6 +36,7 @@ async function check(prepareFails) {
                 serial: 'a'.repeat(20),
                 logical_bytes: 4096,
                 chunk_bitmap: [1],
+                ...(fineChunkRuns && {fine_chunk_runs: [...Buffer.from(fineChunkRuns, 'base64')]}),
               })
             }
           },
@@ -61,6 +62,7 @@ async function check(prepareFails) {
             serial: 'a'.repeat(20),
             logicalBytes: '4096',
             chunkBitmap: 'AQ==',
+            fineChunkRuns,
           }
         },
       }
@@ -82,5 +84,6 @@ async function check(prepareFails) {
 }
 process.env.TMPDIR = path.resolve('tmp')
 check(false)
+  .then(() => check(false, 'AAAAAAEAAAA='))
   .then(() => check(true))
   .then(() => console.log('host snapshot success and failed-prepare cleanup pass'))
